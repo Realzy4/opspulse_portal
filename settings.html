@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPSPULSE | Configurações</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="page-shell">
+        <div class="site-header">
+            <div class="brand">
+                <h1 class="brand__name">Configurações</h1>
+                <p class="brand__tag">Ajustes de preço de energia e preferências do portal.</p>
+            </div>
+            <div class="header-actions">
+                <a class="nav-link" href="index.html">Voltar ao painel</a>
+                <div class="status-pill">
+                    <span class="status-pill__dot"></span>
+                    <span>Sistema Online</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-shell">
+            <aside class="sidebar">
+                <h2>Barra Lateral</h2>
+                <p>Insira o valor actual do kWh e guarde. O valor será enviado ao servidor para actualizar o cálculo de custo.</p>
+                <form id="settingsForm">
+                    <label for="kwhPrice">Preço do kWh</label>
+                    <div class="input-group">
+                        <span class="input-prefix">€</span>
+                        <input id="kwhPrice" name="kwhPrice" type="number" step="0.001" min="0" placeholder="0.195" required>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="btn">Guardar</button>
+                        <span id="saveStatus" class="save-status"></span>
+                    </div>
+                </form>
+            </aside>
+
+            <main class="main-content">
+                <div class="card">
+                    <h3>Instruções</h3>
+                    <p>Use o formulário ao lado para definir o preço por kWh. O envio de dados é feito para o endpoint <code>http://localhost:5000/api/preco-kwh</code>.</p>
+                </div>
+                <div class="card">
+                    <h3>Detalhes</h3>
+                    <p>Esta página é dedicada a configurações e guarda valores que podem ser usados para análises de custo ou actualizações de tarifário.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const settingsForm = document.getElementById('settingsForm');
+        const saveStatus = document.getElementById('saveStatus');
+
+        settingsForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const price = Number(document.getElementById('kwhPrice').value);
+            if (Number.isNaN(price)) {
+                saveStatus.textContent = 'Introduza um valor válido.';
+                saveStatus.style.color = '#ff6b6b';
+                return;
+            }
+
+            saveStatus.textContent = 'A guardar...';
+            saveStatus.style.color = 'var(--text)';
+
+            try {
+                const response = await fetch('http://localhost:5000/api/preco-kwh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ kwhPrice: price })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro no servidor');
+                }
+
+                saveStatus.textContent = 'Guardado com sucesso.';
+                saveStatus.style.color = 'var(--accent-strong)';
+                alert('Preço do kWh guardado com sucesso.');
+            } catch (error) {
+                console.error(error);
+                saveStatus.textContent = 'Erro ao guardar. Verifique o servidor.';
+                saveStatus.style.color = '#ff6b6b';
+            }
+        });
+    </script>
+</body>
+</html>
