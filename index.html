@@ -25,6 +25,12 @@
         </div>
     </div>
 
+    <div class="time-selector">
+        <button type="button" onclick="changeTime('now-6h')">Últimas 6h</button>
+        <button type="button" onclick="changeTime('now-24h')">Últimas 24h</button>
+        <button type="button" onclick="changeTime('now-7d')">Última Semana</button>
+    </div>
+
     <div class="grid">
         <!-- Card do Gráfico de Consumo -->
         <div class="card">
@@ -37,9 +43,35 @@
             <h3>Custo Estimado (€/h)</h3>
             <iframe src="http://localhost:3000/d-solo/adjmrmv/monitorizacao-de-energia?orgId=1&from=1777983981581&to=1778005581581&timezone=browser&panelId=panel-2" width="100%" height="420" frameborder="0"></iframe>
         </div>
+
+        <!-- Dashboards adicionais -->
+        <div class="card">
+            <h3>Dashboard Adicional 1</h3>
+            <iframe src="http://localhost:3000/d-solo/adjmrmv/monitorizacao-de-energia?orgId=1&from=1778042626549&to=1778064226549&timezone=browser&panelId=panel-3" width="100%" height="420" frameborder="0"></iframe>
+        </div>
+
+        <div class="card">
+            <h3>Dashboard Adicional 2</h3>
+            <iframe src="http://localhost:3000/d-solo/adjmrmv/monitorizacao-de-energia?orgId=1&from=1778042626549&to=1778064226549&timezone=browser&panelId=panel-3" width="100%" height="420" frameborder="0"></iframe>
+        </div>
+
+        <div class="card">
+            <h3>Dashboard Adicional 3</h3>
+            <iframe src="http://localhost:3000/d-solo/adjmrmv/monitorizacao-de-energia?orgId=1&from=1778042626549&to=1778064226549&timezone=browser&panelId=panel-5" width="100%" height="420" frameborder="0"></iframe>
+        </div>
     </div>
 
     <script>
+        function changeTime(period) {
+            const iframes = document.querySelectorAll('iframe');
+            iframes.forEach(iframe => {
+                const src = new URL(iframe.src);
+                src.searchParams.set('from', period);
+                src.searchParams.set('to', 'now');
+                iframe.src = src.href;
+            });
+        }
+
         const settingsForm = document.getElementById('settingsForm');
         const saveStatus = document.getElementById('saveStatus');
 
