@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpsPulse Telemetry</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.14), transparent 25%),
+        linear-gradient(180deg, #0f172a 0%, #020617 100%);
+      color: #f8fafc;
+      line-height: 1.5;
+    }
+
+    .page-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 40px;
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    .brand {
+      display: grid;
+      gap: 10px;
+    }
+
+    .brand__title {
+      font-size: clamp(1.9rem, 2.6vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .brand__subtitle {
+      color: #94a3b8;
+      font-size: 0.98rem;
+    }
+
+    .brand-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .brand-status::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+      animation: pulse 1.7s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(0.92);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+      }
+      100% {
+        transform: scale(0.92);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+      }
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .settings-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(56, 189, 248, 0.24);
+      background: rgba(56, 189, 248, 0.1);
+      color: #e0f2fe;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .settings-button:hover {
+      transform: translateY(-1px);
+      background: rgba(56, 189, 248, 0.18);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 24px;
+    }
+
+    .card {
+      padding: 28px;
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    .card-value {
+      font-size: clamp(2.4rem, 3.5vw, 4rem);
+      font-weight: 800;
+      color: #f8fafc;
+      line-height: 1;
+    }
+
+    .card-subtext {
+      color: #94a3b8;
+      font-size: 0.95rem;
+      margin-top: 14px;
+    }
+
+    .highlight {
+      color: #38bdf8;
+    }
+
+    .note {
+      margin-top: 28px;
+      padding: 18px 22px;
+      border-radius: 22px;
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      color: #cbd5e1;
+      font-size: 0.96rem;
+    }
+
+    @media (max-width: 980px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: stretch;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">OpsPulse Telemetry</div>
+        <div class="brand__subtitle">Painel de monitorização em tempo real</div>
+      </div>
+      <div class="actions">
+        <span class="brand-status">Sistema Ativo</span>
+        <a class="settings-button" href="settings.html">⚙️ Definições</a>
+      </div>
+    </header>
+
+    <section class="dashboard-grid">
+      <article class="card">
+        <div class="card-title">Consumo Instantâneo</div>
+        <div class="card-value"><span id="currentWatts">--</span><span class="highlight"> W</span></div>
+        <p class="card-subtext">Valor atual de consumo em watts.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-title">Custo Acumulado</div>
+        <div class="card-value"><span class="highlight">€</span><span id="estimatedCost">--.--</span></div>
+        <p class="card-subtext">Custo estimado da última hora.</p>
+      </article>
+
+      <article class="card">
+        <div class="card-title">Preço Base Recente</div>
+        <div class="card-value"><span id="kwhPrice">--.--</span><span class="highlight"> €/kWh</span></div>
+        <p class="card-subtext">Preço do kWh configurado para o sistema.</p>
+      </article>
+    </section>
+
+    <div class="note">
+      Os valores são atualizados automaticamente a cada 5 segundos a partir do endpoint <code>/api/telemetry</code>.
+    </div>
+  </main>
+
+  <script>
+    const currentWattsEl = document.getElementById("currentWatts");
+    const estimatedCostEl = document.getElementById("estimatedCost");
+    const kwhPriceEl = document.getElementById("kwhPrice");
+
+    async function fetchTelemetry() {
+      try {
+        const response = await fetch("/api/telemetry");
+        if (!response.ok) {
+          throw new Error("Falha na requisição de telemetria");
+        }
+
+        const data = await response.json();
+        const watts = data.current_watts ?? 0;
+        const cost = data.estimated_cost ?? 0;
+        const price = data.kwh_price ?? 0;
+
+        currentWattsEl.textContent = Number(watts).toLocaleString("pt-PT", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        });
+        estimatedCostEl.textContent = Number(cost).toLocaleString("pt-PT", {
+          minimumFractionDigits: 4,
+          maximumFractionDigits: 4,
+        });
+        kwhPriceEl.textContent = Number(price).toLocaleString("pt-PT", {
+          minimumFractionDigits: 4,
+          maximumFractionDigits: 4,
+        });
+      } catch (error) {
+        console.error("Erro ao atualizar telemetria:", error);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      fetchTelemetry();
+      setInterval(fetchTelemetry, 5000);
+    });
+  </script>
+</body>
+</html>

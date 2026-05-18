@@ -7,7 +7,7 @@ set -euo pipefail
 DB_CONTAINER="opspulse-db"
 DB_NAME="postgres"
 DB_USER="postgres"
-SQL_FILE="$(dirname "$0")/dummy_data.sql"
+SQL_FILE="$(dirname "$0")/../db/dummy_data.sql"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "ERROR: Docker não está instalado ou não disponível no PATH." >&2
