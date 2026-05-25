@@ -1,103 +1,432 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpsPulse - Definições</title>
-    <link rel="stylesheet" href="style.css"> <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
-        .container { max-width: 400px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { font-size: 1.5rem; color: #333; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-        button { background: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; }
-        button:hover { background: #0056b3; }
-        #mensagem { margin-top: 15px; padding: 10px; border-radius: 4px; display: none; }
-        .sucesso { background: #d4edda; color: #155724; }
-        .erro { background: #f8d7da; color: #721c24; }
+    <style>
+        /* Reset e variáveis CSS */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --border-color: #334155;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* Main content */
+        main {
+            flex: 1;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .settings-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Estilo do select */
+        select, input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: var(--transition);
+            box-sizing: border-box;
+        }
+
+        select:hover, input:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1), 0 4px 12px rgba(56, 189, 248, 0.15);
+        }
+
+        select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        /* Botões */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, var(--accent-blue), #0284c7);
+            color: var(--text-primary);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+            background: linear-gradient(135deg, #0284c7, var(--accent-blue));
+        }
+
+        .save-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Mensagem de feedback */
+        .feedback-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            animation: slideDown 0.4s ease-out;
+            font-weight: 500;
+            border-left: 4px solid;
+        }
+
+        .feedback-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border-left-color: var(--accent-green);
+            display: block;
+        }
+
+        .feedback-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+            border-left-color: var(--accent-red);
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 40px;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+                margin-bottom: 30px;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .settings-card {
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            body {
+                padding: 15px;
+            }
+        }
+
+        /* Acessibilidade */
+        button:focus-visible,
+        select:focus-visible,
+        input:focus-visible,
+        a:focus-visible {
+            outline: 2px solid var(--accent-blue);
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1 class="header-title">OpsPulse Definições</h1>
+            <a href="index.html" class="back-btn">← Voltar</a>
+        </header>
 
-<div class="container">
-    <h1>Configuração de Custos</h1>
-    
-    <div class="form-group">
-        <label for="preco">Preço por kWh (€):</label>
-        <input type="number" id="preco" step="0.0001" placeholder="Ex: 0.1550">
+        <!-- Main content -->
+        <main>
+            <div class="settings-card">
+                <h2 class="settings-title">Configuração de Custos</h2>
+
+                <!-- Client Selector -->
+                <div class="form-group">
+                    <label for="client-select">Cliente:</label>
+                    <select id="client-select">
+                        <option value="1">Cliente Default / Alfa</option>
+                        <option value="2">Cliente Beta</option>
+                    </select>
+                </div>
+
+                <!-- Price Input -->
+                <div class="form-group">
+                    <label for="preco">Preço por kWh (€):</label>
+                    <input type="number" id="preco" step="0.0001" placeholder="Ex: 0.1550" min="0">
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button class="save-btn" onclick="salvarPreco()">Guardar Alterações</button>
+                </div>
+
+                <!-- Feedback Message -->
+                <div id="mensagem" class="feedback-message"></div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; 2026 OpsPulse. Sistema de Gestão de Energia.</p>
+        </footer>
     </div>
 
-    <button onclick="salvarPreco()">Guardar Alterações</button>
+    <script>
+        // TOKEN de segurança (deve ser igual ao que está no api.py)
+        const API_TOKEN = "OpsPulse_Super_Secret_2026";
+        const API_URL = "/api/preco-kwh";
 
-    <div id="mensagem"></div>
-</div>
+        /**
+         * Carrega o preço atual para o cliente selecionado
+         */
+        async function carregarPreco() {
+            try {
+                const clientSelect = document.getElementById('client-select');
+                const selectedClientId = clientSelect.value;
 
-<script>
-    // TOKEN de segurança (deve ser igual ao que está no api.py)
-    const API_TOKEN = "OpsPulse_Super_Secret_2026";
-
-    // AGORA USAMOS CAMINHO RELATIVO:
-    // O Nginx recebe isto em :80/api/... e manda para :5000/api/...
-    const API_URL = "/api/preco-kwh";
-
-    // Carregar o preço atual ao abrir a página
-    async function carregarPreco() {
-        try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
-            if (data.preco) {
-                document.getElementById('preco').value = data.preco;
+                const response = await fetch(`${API_URL}?client_id=${selectedClientId}`);
+                const data = await response.json();
+                if (data.preco) {
+                    document.getElementById('preco').value = data.preco;
+                    limparMensagem();
+                }
+            } catch (error) {
+                console.error("Erro ao carregar preço:", error);
+                exibirMensagem("Erro ao carregar preço do cliente.", "error");
             }
-        } catch (error) {
-            console.error("Erro ao carregar preço:", error);
-        }
-    }
-
-    // Função para salvar o novo preço
-    async function salvarPreco() {
-        const novoPreco = document.getElementById('preco').value;
-        const msgDiv = document.getElementById('mensagem');
-
-        if (!novoPreco) {
-            exibirMensagem("Por favor, insere um valor.", "erro");
-            return;
         }
 
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-KEY': API_TOKEN
-                },
-                body: JSON.stringify({ preco: novoPreco })
-            });
+        /**
+         * Salva o novo preço para o cliente selecionado
+         */
+        async function salvarPreco() {
+            const clientSelect = document.getElementById('client-select');
+            const selectedClientId = clientSelect.value;
+            const novoPreco = document.getElementById('preco').value;
 
-            const result = await response.json();
-
-            if (response.ok) {
-                exibirMensagem("Preço atualizado com sucesso!", "sucesso");
-            } else {
-                exibirMensagem("Erro: " + result.mensagem, "erro");
+            if (!novoPreco) {
+                exibirMensagem("Por favor, insere um valor de preço.", "error");
+                return;
             }
-        } catch (error) {
-            exibirMensagem("Erro ao conectar com a API.", "erro");
-            console.error(error);
+
+            try {
+                const response = await fetch(`${API_URL}?client_id=${selectedClientId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_TOKEN
+                    },
+                    body: JSON.stringify({ preco: novoPreco })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    exibirMensagem("Preço atualizado com sucesso para o cliente selecionado!", "success");
+                } else {
+                    exibirMensagem("Erro: " + (result.mensagem || "Falha ao guardar"), "error");
+                }
+            } catch (error) {
+                exibirMensagem("Erro ao conectar com a API.", "error");
+                console.error(error);
+            }
         }
-    }
 
-    function exibirMensagem(texto, tipo) {
-        const msgDiv = document.getElementById('mensagem');
-        msgDiv.innerText = texto;
-        msgDiv.className = tipo;
-        msgDiv.style.display = 'block';
-        msgDiv.classList.add(tipo === 'sucesso' ? 'sucesso' : 'erro');
-    }
+        /**
+         * Exibe mensagem de feedback
+         */
+        function exibirMensagem(texto, tipo) {
+            const msgDiv = document.getElementById('mensagem');
+            msgDiv.innerText = texto;
+            msgDiv.className = `feedback-message ${tipo}`;
+            msgDiv.style.display = 'block';
+        }
 
-    // Inicializar
-    carregarPreco();
-</script>
+        /**
+         * Limpa mensagens anteriores
+         */
+        function limparMensagem() {
+            const msgDiv = document.getElementById('mensagem');
+            msgDiv.style.display = 'none';
+            msgDiv.className = 'feedback-message';
+        }
 
+        /**
+         * Inicializa a página
+         */
+        function init() {
+            // Carregar preço ao abrir a página
+            carregarPreco();
+
+            // Adicionar evento change ao seletor de clientes
+            document.getElementById('client-select').addEventListener('change', carregarPreco);
+        }
+
+        // Executar quando o DOM estiver pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
 </body>
 </html>

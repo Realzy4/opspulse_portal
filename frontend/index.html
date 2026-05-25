@@ -146,6 +146,43 @@
             transform: translateY(0);
         }
 
+        /* Client selector */
+        .client-select {
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            font-family: inherit;
+        }
+
+        .client-select:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+        }
+
+        .client-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1), 0 4px 12px rgba(56, 189, 248, 0.2);
+        }
+
+        .client-select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
         /* Main content */
         main {
             flex: 1;
@@ -326,6 +363,15 @@
                 width: 100%;
             }
 
+            .header-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .client-select {
+                width: 100%;
+            }
+
             body {
                 padding: 15px;
             }
@@ -416,7 +462,13 @@
                     Sistema Ativo
                 </div>
             </div>
-            <a href="settings.html" class="settings-btn">⚙️ Definições</a>
+            <div class="header-controls">
+                <select id="client-select" class="client-select">
+                    <option value="1">Cliente Default / Alfa</option>
+                    <option value="2">Cliente Beta</option>
+                </select>
+                <a href="settings.html" class="settings-btn">⚙️ Definições</a>
+            </div>
         </header>
 
         <!-- Main content -->
@@ -512,8 +564,12 @@
          */
         async function fetchTelemetryData() {
             try {
-                // Fazer pedido GET para o endpoint de telemetria
-                const response = await fetch('/api/telemetry');
+                // Obter o ID do cliente selecionado
+                const clientSelect = document.getElementById('client-select');
+                const selectedClientId = clientSelect ? clientSelect.value : '1';
+
+                // Fazer pedido GET para o endpoint de telemetria com client_id
+                const response = await fetch(`/api/telemetry?client_id=${selectedClientId}`);
 
                 // Verificar se a resposta é bem-sucedida
                 if (!response.ok) {
@@ -568,14 +624,63 @@
         }
 
         /**
+         * Carrega a lista de clientes da API e popula o dropdown
+         * @async
+         * @returns {Promise<void>}
+         */
+        async function loadClients() {
+            try {
+                const response = await fetch('/api/clients');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const clients = await response.json();
+                const clientSelect = document.getElementById('client-select');
+
+                if (!clientSelect || !clients || clients.length === 0) {
+                    console.error('Erro ao carregar clientes ou select não encontrado');
+                    return;
+                }
+
+                // Limpar opções antigas
+                clientSelect.innerHTML = '';
+
+                // Adicionar novas opções dinamicamente
+                clients.forEach(client => {
+                    const option = document.createElement('option');
+                    option.value = client.id;
+                    option.textContent = client.name;
+                    clientSelect.appendChild(option);
+                });
+
+                // Garantir que a primeira opção está selecionada
+                if (clientSelect.options.length > 0) {
+                    clientSelect.selectedIndex = 0;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar clientes:', error);
+            }
+        }
+
+        /**
          * Inicia o carregamento automático de dados
          */
         function initTelemetryUpdates() {
-            // Buscar dados imediatamente quando o DOM estiver carregado
-            fetchTelemetryData();
+            // Primeiro, carregar a lista de clientes
+            loadClients().then(() => {
+                // Depois, buscar dados de telemetria imediatamente quando o DOM estiver carregado
+                fetchTelemetryData();
 
-            // Repetir o pedido a cada 5 segundos (5000 ms)
-            setInterval(fetchTelemetryData, 5000);
+                // Repetir o pedido a cada 5 segundos (5000 ms)
+                setInterval(fetchTelemetryData, 5000);
+
+                // Adicionar evento change ao seletor de clientes para atualizar imediatamente
+                const clientSelect = document.getElementById('client-select');
+                if (clientSelect) {
+                    clientSelect.addEventListener('change', fetchTelemetryData);
+                }
+            });
         }
 
         // Executar quando o DOM estiver completamente carregado
