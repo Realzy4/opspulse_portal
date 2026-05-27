@@ -81,3 +81,18 @@ Inserir dados dummy na base de dados:
 - Reorganizei a pasta em `backend/`, `frontend/`, `db/`, `sql/` e `scripts/`
 - Atualizei o `docker-compose.yml` para usar os novos contextos de build
 - Ajustei `insert_dummy_data.sh` para apontar para `db/dummy_data.sql`
+
+
+
+## para o grafana todos os dashboards devem incluir para aparecer apenar o cliente:
+
+-- Exemplo para o gráfico de Watts
+SELECT
+  timestamp AS "time",
+  watts AS "Consumo (W)",
+  device_name AS "Divisão"
+FROM power_consumption
+WHERE 
+  client_id = ${client_id} -- O filtro mágico
+  AND $__timeFilter(timestamp)
+ORDER BY timestamp ASC;

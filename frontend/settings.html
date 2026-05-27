@@ -299,15 +299,6 @@
             <div class="settings-card">
                 <h2 class="settings-title">Configuração de Custos</h2>
 
-                <!-- Client Selector -->
-                <div class="form-group">
-                    <label for="client-select">Cliente:</label>
-                    <select id="client-select">
-                        <option value="1">Cliente Default / Alfa</option>
-                        <option value="2">Cliente Beta</option>
-                    </select>
-                </div>
-
                 <!-- Price Input -->
                 <div class="form-group">
                     <label for="preco">Preço por kWh (€):</label>
@@ -331,21 +322,28 @@
     </div>
 
     <script>
-        // TOKEN de segurança (deve ser igual ao que está no api.py)
         const API_TOKEN = "OpsPulse_Super_Secret_2026";
         const API_URL = "/api/preco-kwh";
 
-        /**
-         * Carrega o preço atual para o cliente selecionado
-         */
+        function getCurrentClientId() {
+            return localStorage.getItem('client_id');
+        }
+
+        function requireSession() {
+            const clientId = getCurrentClientId();
+            if (!clientId) {
+                window.location.href = 'login.html';
+            }
+            return clientId;
+        }
+
         async function carregarPreco() {
             try {
-                const clientSelect = document.getElementById('client-select');
-                const selectedClientId = clientSelect.value;
-
+                const selectedClientId = requireSession();
                 const response = await fetch(`${API_URL}?client_id=${selectedClientId}`);
                 const data = await response.json();
-                if (data.preco) {
+
+                if (data.preco || data.preco === 0 || data.preco === '0') {
                     document.getElementById('preco').value = data.preco;
                     limparMensagem();
                 }
@@ -355,15 +353,11 @@
             }
         }
 
-        /**
-         * Salva o novo preço para o cliente selecionado
-         */
         async function salvarPreco() {
-            const clientSelect = document.getElementById('client-select');
-            const selectedClientId = clientSelect.value;
+            const selectedClientId = requireSession();
             const novoPreco = document.getElementById('preco').value;
 
-            if (!novoPreco) {
+            if (!novoPreco && novoPreco !== '0') {
                 exibirMensagem("Por favor, insere um valor de preço.", "error");
                 return;
             }
@@ -373,15 +367,14 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-API-Key': API_TOKEN
+                        'X-API-KEY': API_TOKEN
                     },
                     body: JSON.stringify({ preco: novoPreco })
                 });
 
                 const result = await response.json();
-
                 if (response.ok) {
-                    exibirMensagem("Preço atualizado com sucesso para o cliente selecionado!", "success");
+                    exibirMensagem("Preço atualizado com sucesso!", "success");
                 } else {
                     exibirMensagem("Erro: " + (result.mensagem || "Falha ao guardar"), "error");
                 }
@@ -391,9 +384,6 @@
             }
         }
 
-        /**
-         * Exibe mensagem de feedback
-         */
         function exibirMensagem(texto, tipo) {
             const msgDiv = document.getElementById('mensagem');
             msgDiv.innerText = texto;
@@ -401,27 +391,17 @@
             msgDiv.style.display = 'block';
         }
 
-        /**
-         * Limpa mensagens anteriores
-         */
         function limparMensagem() {
             const msgDiv = document.getElementById('mensagem');
             msgDiv.style.display = 'none';
             msgDiv.className = 'feedback-message';
         }
 
-        /**
-         * Inicializa a página
-         */
-        function init() {
-            // Carregar preço ao abrir a página
+        async function init() {
+            requireSession();
             carregarPreco();
-
-            // Adicionar evento change ao seletor de clientes
-            document.getElementById('client-select').addEventListener('change', carregarPreco);
         }
 
-        // Executar quando o DOM estiver pronto
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {

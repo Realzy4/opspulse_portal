@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>OpsPulse Telemetry Dashboard</title>
+    <script>
+        if (!localStorage.getItem('client_id')) {
+            window.location.href = 'login.html';
+        }
+    </script>
     <style>
         /* Reset e variáveis CSS */
         :root {
@@ -463,11 +468,9 @@
                 </div>
             </div>
             <div class="header-controls">
-                <select id="client-select" class="client-select">
-                    <option value="1">Cliente Default / Alfa</option>
-                    <option value="2">Cliente Beta</option>
-                </select>
+                <div class="user-badge">Olá, <span id="user-name">Utilizador</span></div>
                 <a href="settings.html" class="settings-btn">⚙️ Definições</a>
+                <button id="logout-btn" class="settings-btn" style="background: #ef4444;">Sair</button>
             </div>
         </header>
 
@@ -533,11 +536,6 @@
 
     <!-- Script de atualização automática -->
     <script>
-        /**
-         * Formata um número em formato monetário EUR com 4 casas decimais
-         * @param {number} value - Valor a formatar
-         * @returns {string} Valor formatado
-         */
         function formatCurrency(value) {
             return new Intl.NumberFormat('pt-PT', {
                 minimumFractionDigits: 4,
@@ -545,11 +543,6 @@
             }).format(value);
         }
 
-        /**
-         * Formata um número com separador de milhares
-         * @param {number} value - Valor a formatar
-         * @returns {string} Valor formatado
-         */
         function formatNumber(value) {
             return new Intl.NumberFormat('pt-PT', {
                 minimumFractionDigits: 0,
@@ -557,65 +550,70 @@
             }).format(value);
         }
 
-        /**
-         * Busca dados de telemetria do endpoint da API
-         * @async
-         * @returns {Promise<void>}
-         */
+        function getCurrentClientId() {
+            return localStorage.getItem('client_id');
+        }
+
+        function updateLoggedUser() {
+            const userName = localStorage.getItem('username') || 'Utilizador';
+            const userNameElement = document.getElementById('user-name');
+            if (userNameElement) {
+                userNameElement.textContent = userName;
+            }
+        }
+
+        function updateGrafanaIframe() {
+            const grafanaIframe = document.getElementById('grafana-iframe');
+            if (!grafanaIframe) {
+                console.error('Iframe do Grafana não encontrado');
+                return;
+            }
+
+            const clientId = getCurrentClientId();
+            if (!clientId) {
+                console.error('client_id não encontrado no localStorage');
+                return;
+            }
+
+            const baseUrl = 'http://localhost:3000/d-solo/adjmrmv/monitorizacao-de-energia?orgId=1&from=1779854671179&to=1779876271179&timezone=browser&panelId=panel-6';
+            const separator = baseUrl.includes('?') ? '&' : '?';
+            const newSrc = `${baseUrl}${separator}var-client_id=${clientId}`;
+            console.log('A carregar Grafana para o cliente:', clientId, '->', newSrc);
+            grafanaIframe.src = newSrc;
+        }
+
         async function fetchTelemetryData() {
             try {
-                // Obter o ID do cliente selecionado
-                const clientSelect = document.getElementById('client-select');
-                const selectedClientId = clientSelect ? clientSelect.value : '1';
-
-                // Fazer pedido GET para o endpoint de telemetria com client_id
-                const response = await fetch(`/api/telemetry?client_id=${selectedClientId}`);
-
-                // Verificar se a resposta é bem-sucedida
+                const clientId = getCurrentClientId();
+                const response = await fetch(`/api/telemetry?client_id=${clientId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
-                // Parse do JSON de resposta
                 const data = await response.json();
 
-                // Extrair valores do JSON
                 const currentWatts = data.current_watts || 0;
                 const estimatedCost = data.estimated_cost || 0;
                 const kwhPrice = data.kwh_price || 0;
 
-                // Injetar valores nos elementos do DOM
                 updateTelemetryDisplay(currentWatts, estimatedCost, kwhPrice);
-
             } catch (error) {
                 console.error('Erro ao buscar dados de telemetria:', error);
-                // Manter os valores existentes em caso de erro
-                // (não atualizar a UI)
             }
         }
 
-        /**
-         * Atualiza a UI com os valores de telemetria
-         * @param {number} watts - Potência em Watts
-         * @param {number} cost - Custo em Euros
-         * @param {number} price - Preço em €/kWh
-         */
         function updateTelemetryDisplay(watts, cost, price) {
-            // Atualizar consumo instantâneo (Watts)
             const powerElement = document.getElementById('power-value');
             if (powerElement) {
                 powerElement.textContent = formatNumber(watts);
                 powerElement.classList.remove('loading');
             }
 
-            // Atualizar custo acumulado (Euros com 4 casas decimais)
             const costElement = document.getElementById('cost-value');
             if (costElement) {
                 costElement.textContent = formatCurrency(cost);
                 costElement.classList.remove('loading');
             }
 
-            // Atualizar preço base (€/kWh)
             const priceElement = document.getElementById('price-value');
             if (priceElement) {
                 priceElement.textContent = formatNumber(price);
@@ -623,71 +621,27 @@
             }
         }
 
-        /**
-         * Carrega a lista de clientes da API e popula o dropdown
-         * @async
-         * @returns {Promise<void>}
-         */
-        async function loadClients() {
-            try {
-                const response = await fetch('/api/clients');
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+        function logout() {
+            localStorage.removeItem('client_id');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        }
 
-                const clients = await response.json();
-                const clientSelect = document.getElementById('client-select');
+        function initTelemetryUpdates() {
+            updateLoggedUser();
+            updateGrafanaIframe();
+            fetchTelemetryData();
+            setInterval(fetchTelemetryData, 5000);
 
-                if (!clientSelect || !clients || clients.length === 0) {
-                    console.error('Erro ao carregar clientes ou select não encontrado');
-                    return;
-                }
-
-                // Limpar opções antigas
-                clientSelect.innerHTML = '';
-
-                // Adicionar novas opções dinamicamente
-                clients.forEach(client => {
-                    const option = document.createElement('option');
-                    option.value = client.id;
-                    option.textContent = client.name;
-                    clientSelect.appendChild(option);
-                });
-
-                // Garantir que a primeira opção está selecionada
-                if (clientSelect.options.length > 0) {
-                    clientSelect.selectedIndex = 0;
-                }
-            } catch (error) {
-                console.error('Erro ao carregar clientes:', error);
+            const logoutButton = document.getElementById('logout-btn');
+            if (logoutButton) {
+                logoutButton.addEventListener('click', logout);
             }
         }
 
-        /**
-         * Inicia o carregamento automático de dados
-         */
-        function initTelemetryUpdates() {
-            // Primeiro, carregar a lista de clientes
-            loadClients().then(() => {
-                // Depois, buscar dados de telemetria imediatamente quando o DOM estiver carregado
-                fetchTelemetryData();
-
-                // Repetir o pedido a cada 5 segundos (5000 ms)
-                setInterval(fetchTelemetryData, 5000);
-
-                // Adicionar evento change ao seletor de clientes para atualizar imediatamente
-                const clientSelect = document.getElementById('client-select');
-                if (clientSelect) {
-                    clientSelect.addEventListener('change', fetchTelemetryData);
-                }
-            });
-        }
-
-        // Executar quando o DOM estiver completamente carregado
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initTelemetryUpdates);
         } else {
-            // DOM já está carregado (em caso de script carregado no final do body)
             initTelemetryUpdates();
         }
     </script>

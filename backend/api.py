@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import os
 from functools import wraps
@@ -81,20 +82,8 @@ def obter_preco():
         except (ValueError, TypeError):
             client_id = 1
         
-        # Mapear client_id=1 e client_id=2 para IDs reais de clientes
-        if client_id == 1:
-            # Buscar o primeiro cliente (Default ou mais antigo)
-            cur.execute("SELECT id FROM clients ORDER BY id LIMIT 1;")
-            row = cur.fetchone()
-            actual_client_id = row[0] if row else 1
-        elif client_id == 2:
-            # Buscar Cliente Beta
-            cur.execute("SELECT id FROM clients WHERE name = 'Cliente Beta' LIMIT 1;")
-            row = cur.fetchone()
-            actual_client_id = row[0] if row else 3  # fallback
-        else:
-            # Usar diretamente se for um ID de BD válido
-            actual_client_id = client_id
+        # Usar diretamente o client_id enviado pela sessão ou pela query string
+        actual_client_id = client_id
         
         cur.execute(
             "SELECT value FROM service_config WHERE key = 'kwh_price' AND client_id = %s;",
@@ -123,20 +112,8 @@ def atualizar_preco():
         except (ValueError, TypeError):
             client_id = 1
         
-        # Mapear client_id=1 e client_id=2 para IDs reais de clientes
-        if client_id == 1:
-            # Buscar o primeiro cliente (Default ou mais antigo)
-            cur.execute("SELECT id FROM clients ORDER BY id LIMIT 1;")
-            row = cur.fetchone()
-            actual_client_id = row[0] if row else 1
-        elif client_id == 2:
-            # Buscar Cliente Beta
-            cur.execute("SELECT id FROM clients WHERE name = 'Cliente Beta' LIMIT 1;")
-            row = cur.fetchone()
-            actual_client_id = row[0] if row else 3  # fallback
-        else:
-            # Usar diretamente se for um ID de BD válido
-            actual_client_id = client_id
+        # Usar diretamente o client_id enviado pela sessão ou pela query string
+        actual_client_id = client_id
         
         dados = request.get_json() or {}
         novo_preco = dados.get('preco') or dados.get('kwhPrice')
@@ -171,6 +148,42 @@ def atualizar_preco():
     except Exception as e:
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
 
+@app.route('/api/login', methods=['POST'])
+def login():
+    conn = None
+    cur = None
+    try:
+        data = request.get_json() or {}
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            return jsonify({"status": "erro", "mensagem": "Credenciais inválidas"}), 401
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id, client_id, username, password_hash FROM users WHERE username = %s LIMIT 1;",
+            (username,)
+        )
+        user = cur.fetchone()
+
+        if not user:
+            return jsonify({"status": "erro", "mensagem": "Credenciais inválidas"}), 401
+
+        user_id, client_id, found_username, password_hash = user
+        if not check_password_hash(password_hash, password):
+            return jsonify({"status": "erro", "mensagem": "Credenciais inválidas"}), 401
+
+        return jsonify({"status": "sucesso", "client_id": client_id, "username": found_username}), 200
+    except Exception as e:
+        return jsonify({"status": "erro", "mensagem": "Credenciais inválidas"}), 401
+    finally:
+        if cur is not None:
+            cur.close()
+        if conn is not None:
+            conn.close()
+
 @app.route('/api/telemetry', methods=['GET'])
 def obter_telemetry():
     conn = None
@@ -189,20 +202,8 @@ def obter_telemetry():
         # Mapear client_id=1 e client_id=2 para IDs reais de clientes
         # client_id=1 pode ser qualquer um dos primeiros clientes (Default, Alfa, etc.)
         # client_id=2 é Cliente Beta
-        # Se for um valor direto de BD (ex: 36-40), usar diretamente
-        if client_id == 1:
-            # Buscar o primeiro cliente (Default ou mais antigo)
-            cur.execute("SELECT id FROM clients ORDER BY id LIMIT 1;")
-            row = cur.fetchone()
-            actual_client_id = row[0] if row else 1
-        elif client_id == 2:
-            # Buscar Cliente Beta
-            cur.execute("SELECT id FROM clients WHERE name = 'Cliente Beta' LIMIT 1;")
-            row = cur.fetchone()
-            actual_client_id = row[0] if row else 3  # fallback
-        else:
-            # Usar diretamente se for um ID de BD válido
-            actual_client_id = client_id
+        # Usar diretamente o client_id enviado pela sessão ou pela query string
+        actual_client_id = client_id
 
         cur.execute(
             "SELECT value FROM service_config WHERE key = 'kwh_price' AND client_id = %s;",
