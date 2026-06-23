@@ -301,6 +301,11 @@
 
                 <!-- Price Input -->
                 <div class="form-group">
+                    <label for="client-select">Selecionar Cliente:</label>
+                    <select id="client-select"></select>
+                </div>
+
+                <div class="form-group">
                     <label for="preco">Preço por kWh (€):</label>
                     <input type="number" id="preco" step="0.0001" placeholder="Ex: 0.1550" min="0">
                 </div>
@@ -337,9 +342,31 @@
             return clientId;
         }
 
+        async function carregarClients() {
+            try {
+                const res = await fetch('/api/clients');
+                const clients = await res.json();
+                const select = document.getElementById('client-select');
+                select.innerHTML = '';
+                clients.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name + ' (' + c.id + ')';
+                    select.appendChild(opt);
+                });
+
+                const current = getCurrentClientId();
+                if (current) select.value = current;
+                await carregarPreco();
+            } catch (error) {
+                console.error('Erro ao carregar clients', error);
+            }
+        }
+
         async function carregarPreco() {
             try {
-                const selectedClientId = requireSession();
+                const select = document.getElementById('client-select');
+                const selectedClientId = select ? select.value : requireSession();
                 const response = await fetch(`${API_URL}?client_id=${selectedClientId}`);
                 const data = await response.json();
 
@@ -354,7 +381,8 @@
         }
 
         async function salvarPreco() {
-            const selectedClientId = requireSession();
+            const select = document.getElementById('client-select');
+            const selectedClientId = select ? select.value : requireSession();
             const novoPreco = document.getElementById('preco').value;
 
             if (!novoPreco && novoPreco !== '0') {
@@ -367,9 +395,10 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-API-KEY': API_TOKEN
+                        'X-API-Key': API_TOKEN,
+                        'X-Client-Id': selectedClientId
                     },
-                    body: JSON.stringify({ preco: novoPreco })
+                    body: JSON.stringify({ preco: novoPreco, client_id: selectedClientId })
                 });
 
                 const result = await response.json();
@@ -399,7 +428,9 @@
 
         async function init() {
             requireSession();
-            carregarPreco();
+            await carregarClients();
+            const select = document.getElementById('client-select');
+            if (select) select.addEventListener('change', carregarPreco);
         }
 
         if (document.readyState === 'loading') {

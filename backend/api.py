@@ -82,8 +82,17 @@ def obter_preco():
         except (ValueError, TypeError):
             client_id = 1
         
-        # Usar diretamente o client_id enviado pela sessão ou pela query string
+        # Se o client_id vier no corpo da requisição, prefira-o (front-end pode enviar explicitamente)
         actual_client_id = client_id
+        try:
+            body_client_id = dados.get('client_id') if isinstance(dados, dict) else None
+            if body_client_id is not None:
+                try:
+                    actual_client_id = int(body_client_id)
+                except (ValueError, TypeError):
+                    pass
+        except Exception:
+            pass
         
         cur.execute(
             "SELECT value FROM service_config WHERE key = 'kwh_price' AND client_id = %s;",
@@ -115,7 +124,46 @@ def atualizar_preco():
         # Usar diretamente o client_id enviado pela sessão ou pela query string
         actual_client_id = client_id
         
+        # Log raw body for debugging
+        try:
+            raw = request.get_data()
+            app.logger.warning(f"RAW_BODY: {raw}")
+            print(f"RAW_BODY: {raw}")
+        except Exception:
+            pass
+
         dados = request.get_json() or {}
+        # Se o client_id vier no corpo da requisição, prefira-o
+        try:
+            body_client_id = dados.get('client_id') if isinstance(dados, dict) else None
+            if body_client_id is not None:
+                try:
+                    actual_client_id = int(body_client_id)
+                except (ValueError, TypeError):
+                    pass
+        except Exception:
+            pass
+        # Se o client_id vier no header X-Client-Id, prefira-o (mais explícito)
+        try:
+            header_client = request.headers.get('X-Client-Id')
+            if header_client is not None:
+                try:
+                    actual_client_id = int(header_client)
+                except (ValueError, TypeError):
+                    pass
+        except Exception:
+            pass
+        # Debug: log received request args, headers and JSON body
+        try:
+            app.logger.warning(f"REQUEST ARGS: {request.args.to_dict()} HEADERS: {{'X-API-Key': request.headers.get('X-API-Key')}} JSON: {dados}")
+        except Exception:
+            app.logger.warning('Failed to log full request details')
+
+        # Also print to stdout to ensure visibility in container logs
+        try:
+            print(f"DEBUG_REQUEST client_id_param={client_id_param} client_id={client_id} actual_client_id={actual_client_id} JSON={dados}")
+        except Exception:
+            print('DEBUG_REQUEST failed to print')
         novo_preco = dados.get('preco') or dados.get('kwhPrice')
         
         if not novo_preco:
@@ -133,19 +181,20 @@ def atualizar_preco():
             );
             """
         )
-        
+
         cur.execute(
             "INSERT INTO service_config (client_id, key, value) VALUES (%s, 'kwh_price', %s) "
             "ON CONFLICT (client_id, key) DO UPDATE SET value = EXCLUDED.value;",
             (actual_client_id, str(novo_preco))
         )
-        
+
         conn.commit()
         cur.close()
         conn.close()
-        
-        return jsonify({"status": "sucesso", "mensagem": f"Preço atualizado para {novo_preco}"})
+
+        return jsonify({"status": "sucesso", "mensagem": f"Preço atualizado para {novo_preco}", "client_id": actual_client_id})
     except Exception as e:
+        app.logger.exception('Erro ao atualizar preco kwh')
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
 
 @app.route('/api/login', methods=['POST'])
